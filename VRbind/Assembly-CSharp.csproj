@@ -236,7 +236,6 @@
      <Compile Include="Assets\OvrAvatar\Scripts\OvrAvatarSkinnedMeshRenderComponent.cs" />
      <Compile Include="Assets\OvrAvatar\Scripts\OvrAvatarSkinnedMeshRenderPBSComponent.cs" />
      <Compile Include="Assets\OvrAvatar\Scripts\OvrAvatarTouchController.cs" />
-     <Compile Include="Assets\Scripts\MainWindow.xaml.cs" />
      <Compile Include="Assets\Scripts\webCamUI.cs" />
      <None Include="Assets\OvrAvatar\Content\Materials\AvatarMaterialStateShader.cginc" />
      <None Include="Assets\OSPNative\THIRD_PARTY_NOTICES.txt" />
