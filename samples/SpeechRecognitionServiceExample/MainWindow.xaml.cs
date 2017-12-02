@@ -41,6 +41,7 @@ namespace Microsoft.CognitiveServices.SpeechRecognition
     using System.IO.IsolatedStorage;
     using System.Runtime.CompilerServices;
     using System.Windows;
+  //  using Google.Cloud.Translation.V2;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -73,13 +74,22 @@ namespace Microsoft.CognitiveServices.SpeechRecognition
         /// </summary>
         private MicrophoneRecognitionClient micClient;
 
+        private String inputLanguage;
+
+// private TranslationClient client;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MainWindow"/> class.
         /// </summary>
         public MainWindow()
         {
+
+            /*   Console.OutputEncoding = System.Text.Encoding.Unicode;
+               TranslationClient client = TranslationClient.Create();
+               var response = client.TranslateText("Hello World.", "ru");
+               Console.WriteLine(response.TranslatedText);  */
             this.InitializeComponent();
-            this.Initialize();
+            this.Initialize();          
         }
 
         #region Events
@@ -230,34 +240,6 @@ namespace Microsoft.CognitiveServices.SpeechRecognition
         }
 
         /// <summary>
-        /// Gets the short wave file path.
-        /// </summary>
-        /// <value>
-        /// The short wave file.
-        /// </value>
-        private string ShortWaveFile
-        {
-            get
-            {
-                return ConfigurationManager.AppSettings["ShortWaveFile"];
-            }
-        }
-
-        /// <summary>
-        /// Gets the long wave file path.
-        /// </summary>
-        /// <value>
-        /// The long wave file.
-        /// </value>
-        private string LongWaveFile
-        {
-            get
-            {
-                return ConfigurationManager.AppSettings["LongWaveFile"];
-            }
-        }
-
-        /// <summary>
         /// Gets the Cognitive Service Authentication Uri.
         /// </summary>
         /// <value>
@@ -291,28 +273,12 @@ namespace Microsoft.CognitiveServices.SpeechRecognition
         }
 
         /// <summary>
-        /// Saves the subscription key to isolated storage.
-        /// </summary>
-        /// <param name="subscriptionKey">The subscription key.</param>
-        private static void SaveSubscriptionKeyToIsolatedStorage(string subscriptionKey)
-        {
-            using (IsolatedStorageFile isoStore = IsolatedStorageFile.GetStore(IsolatedStorageScope.User | IsolatedStorageScope.Assembly, null, null))
-            {
-                using (var oStream = new IsolatedStorageFileStream(IsolatedStorageSubscriptionKeyFileName, FileMode.Create, isoStore))
-                {
-                    using (var writer = new StreamWriter(oStream))
-                    {
-                        writer.WriteLine(subscriptionKey);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
         /// Initializes a fresh audio session.
         /// </summary>
         private void Initialize()
         {
+            this.subscriptionKey = "77b4b6d16a5547d28575c12dd73352e7";
+
             this.IsMicrophoneClientShortPhrase = true;
             this.IsMicrophoneClientWithIntent = false;
             this.IsMicrophoneClientDictation = false;
@@ -338,38 +304,19 @@ namespace Microsoft.CognitiveServices.SpeechRecognition
 
             this.LogRecognitionStart();
 
-            if (this.UseMicrophone)
+            if (this.micClient == null)
             {
-                if (this.micClient == null)
+                if (this.WantIntent)
                 {
-                    if (this.WantIntent)
-                    {
-                        this.CreateMicrophoneRecoClientWithIntent();
-                    }
-                    else
-                    {
-                        this.CreateMicrophoneRecoClient();
-                    }
+                    this.CreateMicrophoneRecoClientWithIntent();
                 }
-
-                this.micClient.StartMicAndRecognition();
-            }
-            else
-            {
-                if (null == this.dataClient)
+                else
                 {
-                    if (this.WantIntent)
-                    {
-                        this.CreateDataRecoClientWithIntent();
-                    }
-                    else
-                    {
-                        this.CreateDataRecoClient();
-                    }
+                    this.CreateMicrophoneRecoClient();
                 }
-
-                this.SendAudioHelper((this.Mode == SpeechRecognitionMode.ShortPhrase) ? this.ShortWaveFile : this.LongWaveFile);
             }
+
+            this.micClient.StartMicAndRecognition();
         }
 
         /// <summary>
@@ -377,21 +324,7 @@ namespace Microsoft.CognitiveServices.SpeechRecognition
         /// </summary>
         private void LogRecognitionStart()
         {
-            string recoSource;
-            if (this.UseMicrophone)
-            {
-                recoSource = "microphone";
-            }
-            else if (this.Mode == SpeechRecognitionMode.ShortPhrase)
-            {
-                recoSource = "short wav file";
-            }
-            else
-            {
-                recoSource = "long wav file";
-            }
-
-            this.WriteLine("\n--- Start speech recognition using " + recoSource + " with " + this.Mode + " mode in " + this.DefaultLocale + " language ----\n\n");
+            statusText.Text = "Start speech recognition with " + this.Mode + " mode in " + this.inputLanguage + " language, please start speaking.";
         }
 
         /// <summary>
@@ -425,8 +358,6 @@ namespace Microsoft.CognitiveServices.SpeechRecognition
         /// </summary>
         private void CreateMicrophoneRecoClientWithIntent()
         {
-            this.WriteLine("--- Start microphone dictation with Intent detection ----");
-
             this.micClient =
                 SpeechRecognitionServiceFactory.CreateMicrophoneClientWithIntentUsingEndpointUrl(
                     this.DefaultLocale,
@@ -550,15 +481,15 @@ namespace Microsoft.CognitiveServices.SpeechRecognition
         {
             Dispatcher.Invoke((Action)(() =>
             {
-                this.WriteLine("--- OnMicShortPhraseResponseReceivedHandler ---");
 
+                statusText.Clear();
+                statusText.Text = "Finished short response. Displaying results above...";
                 // we got the final result, so it we can end the mic reco.  No need to do this
                 // for dataReco, since we already called endAudio() on it as soon as we were done
                 // sending all the data.
                 this.micClient.EndMicAndRecognition();
 
                 this.WriteResponseResult(e);
-
                 _startButton.IsEnabled = true;
                 _radioGroup.IsEnabled = true;
             }));
@@ -597,16 +528,7 @@ namespace Microsoft.CognitiveServices.SpeechRecognition
             }
             else
             {
-                this.WriteLine("********* Final n-BEST Results *********");
-                for (int i = 0; i < e.PhraseResponse.Results.Length; i++)
-                {
-                    this.WriteLine(
-                        "[{0}] Confidence={1}, Text=\"{2}\"", 
-                        i, 
-                        e.PhraseResponse.Results[i].Confidence,
-                        e.PhraseResponse.Results[i].DisplayText);
-                }
-
+                this.WriteLine(e.PhraseResponse.Results[0].DisplayText);
                 this.WriteLine();
             }
         }
@@ -683,8 +605,7 @@ namespace Microsoft.CognitiveServices.SpeechRecognition
         /// <param name="e">The <see cref="PartialSpeechResponseEventArgs"/> instance containing the event data.</param>
         private void OnPartialResponseReceivedHandler(object sender, PartialSpeechResponseEventArgs e)
         {
-            this.WriteLine("--- Partial result received by OnPartialResponseReceivedHandler() ---");
-            this.WriteLine("{0}", e.PartialResult);
+            this.WriteLine(e.PartialResult);
             this.WriteLine();
         }
 
@@ -716,14 +637,6 @@ namespace Microsoft.CognitiveServices.SpeechRecognition
         {
             Dispatcher.Invoke(() =>
             {
-                WriteLine("--- Microphone status change received by OnMicrophoneStatus() ---");
-                WriteLine("********* Microphone status: {0} *********", e.Recording);
-                if (e.Recording)
-                {
-                    WriteLine("Please start speaking.");
-                }
-
-                WriteLine();
             });
         }
 
@@ -786,51 +699,6 @@ namespace Microsoft.CognitiveServices.SpeechRecognition
         }
 
         /// <summary>
-        /// Handles the Click event of the subscription key save button.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="RoutedEventArgs"/> instance containing the event data.</param>
-        private void SaveKey_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                SaveSubscriptionKeyToIsolatedStorage(this.SubscriptionKey);
-                MessageBox.Show("Subscription key is saved in your disk.\nYou do not need to paste the key next time.", "Subscription Key");
-            }
-            catch (Exception exception)
-            {
-                MessageBox.Show(
-                    "Fail to save subscription key. Error message: " + exception.Message,
-                    "Subscription Key", 
-                    MessageBoxButton.OK, 
-                    MessageBoxImage.Error);
-            }
-        }
-
-        /// <summary>
-        /// Handles the Click event of the DeleteKey control.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="RoutedEventArgs"/> instance containing the event data.</param>
-        private void DeleteKey_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                this.SubscriptionKey = DefaultSubscriptionKeyPromptMessage;
-                SaveSubscriptionKeyToIsolatedStorage(string.Empty);
-                MessageBox.Show("Subscription key is deleted from your disk.", "Subscription Key");
-            }
-            catch (Exception exception)
-            {
-                MessageBox.Show(
-                    "Fail to delete subscription key. Error message: " + exception.Message,
-                    "Subscription Key", 
-                    MessageBoxButton.OK, 
-                    MessageBoxImage.Error);
-            }
-        }
-
-        /// <summary>
         /// Helper function for INotifyPropertyChanged interface 
         /// </summary>
         /// <typeparam name="T">Property type</typeparam>
@@ -868,6 +736,36 @@ namespace Microsoft.CognitiveServices.SpeechRecognition
             this._logText.Text = string.Empty;
             this._startButton.IsEnabled = true;
             this._radioGroup.IsEnabled = true;
+        }
+
+        private void RadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            inputLanguage = "en-US";
+        }
+
+        private void RadioButton_Checked_1(object sender, RoutedEventArgs e)
+        {
+            inputLanguage = "zh-cn";
+        }
+
+        private void RadioButton_Checked_2(object sender, RoutedEventArgs e)
+        {
+            inputLanguage = "es-es";
+        }
+
+        private void _micRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void _micDictationRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void _micIntentRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }
