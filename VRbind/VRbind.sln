@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VRbind", "Assembly-CSharp.csproj", "{92351509-738B-441B-DD69-1D29F44BA625}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VRbind", "Assembly-CSharp-Editor.csproj", "{BBCBA5E9-97A1-49D4-BC95-BC84754D4C84}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{92351509-738B-441B-DD69-1D29F44BA625}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92351509-738B-441B-DD69-1D29F44BA625}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92351509-738B-441B-DD69-1D29F44BA625}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92351509-738B-441B-DD69-1D29F44BA625}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBCBA5E9-97A1-49D4-BC95-BC84754D4C84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBCBA5E9-97A1-49D4-BC95-BC84754D4C84}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBCBA5E9-97A1-49D4-BC95-BC84754D4C84}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBCBA5E9-97A1-49D4-BC95-BC84754D4C84}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = Assembly-CSharp.csproj
+	EndGlobalSection
+EndGlobal
